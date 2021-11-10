@@ -10,17 +10,23 @@
 
 using namespace std;
 using namespace filesystem;
-int main(int argc, char** argv);
+void main();
 enum Direction
 {
 	Up, Down, Right, Left,
 	Up_Left, Up_Right, Down_Left, Down_Right
 };
 
+
+enum Game_State
+{
+	Playing, Game_Over, Win
+};
+
 int const CountStep = 8;
-int const TurnXArray[] = { -1, -1, 1, 1, -1, 0 , 1, 0};
-int const TurnYArray[] = { -1, 1, -1, 1, 0, -1 , 0, 1};
-Direction const Step_Direction[] = { Up_Right, Up_Left, Down_Left, Down_Right, Right, Down, Left, Up};
+int const TurnXArray[] = { -1, -1, 1, 1, -1, 0 , 1, 0 };
+int const TurnYArray[] = { -1, 1, -1, 1, 0, -1 , 0, 1 };
+Direction const Step_Direction[] = { Up_Right, Up_Left, Down_Left, Down_Right, Right, Down, Left, Up };
 vector <vector <char>> g_Field;//само игровое поле
 
 struct Vector2 //структура которая позволяет получать координаты
@@ -42,7 +48,7 @@ struct Vector2 //структура которая позволяет получ
 	{
 		return int(abs(Target.Y - Y) + abs(Target.X - X));
 	}
-	//идет не правильное получение направления движения (я хз как сделать)
+
 	void SetDirection(vector <Vector2> closeCoordinates)
 	{
 		//float min = FLT_MAX;
@@ -51,7 +57,7 @@ struct Vector2 //структура которая позволяет получ
 			for (int j = 0; j < closeCoordinates.size(); j++)
 			{
 				//if (X + TurnXArray[i] == parent.X && Y + TurnYArray[i] == parent.Y)
-				if(X + TurnXArray[i] == closeCoordinates[j].X && Y + TurnYArray[i] == closeCoordinates[j].Y)
+				if (X + TurnXArray[i] == closeCoordinates[j].X && Y + TurnYArray[i] == closeCoordinates[j].Y)
 				{
 					Local_Direction = Step_Direction[i];
 				}
@@ -70,9 +76,10 @@ struct Vector2 //структура которая позволяет получ
 	{
 		return X != other.X || Y != other.Y;
 	}
+
 };
 
-void FindSmallestCost(Vector2 &f_Position_Algorithm);
+void FindSmallestCost(Vector2& f_Position_Algorithm);
 bool Not_In(Vector2 DesiredCoordinate, vector<Vector2> VisitedCoordinates);
 
 
@@ -87,6 +94,7 @@ vector <Vector2> PathToPlayer;//путь до игрока
 ifstream g_file_field(current_path().string() + "/Field Example.txt");
 Vector2 Player_Position;//позиция игрока
 Vector2 g_Enemy_Position;//текущая позиция
+Vector2 g_Win_Position;
 Vector2 g_Next_Position_Algorithm;//следующая позиция алгоритма
 
 
@@ -153,7 +161,7 @@ void MakePathToPlayer(Vector2 f_Position_Algorithm)//собираем в отд�
 						}
 					}
 				}
-				
+
 				break;
 			}
 		}
@@ -189,7 +197,7 @@ void FindPathToPlayer(Vector2 EnemyPosition)//ищем путь к игроку
 					{
 						g_Enemy_Field[NextPosition.Y][NextPosition.X] = g_Enemy_Field[Position.Y][Position.X]
 							+ sqrt((float)abs(TurnXArray[i] + TurnYArray[i]));
-						
+
 						NextPosition.Local_Direction = Step_Direction[i];
 						OpenCoordinates.push_back(NextPosition);
 					}
@@ -201,12 +209,12 @@ void FindPathToPlayer(Vector2 EnemyPosition)//ищем путь к игроку
 		{
 			break;
 		}
-	} 
+	}
 
 	MakePathToPlayer(g_Next_Position_Algorithm);//после нахождения всех возможных ходов строим путь до игрока
 }
 
-void FindSmallestCost(Vector2 &f_Position_Algorithm)//находим самую маленькую по стоимости шага клетку
+void FindSmallestCost(Vector2& f_Position_Algorithm)//находим самую маленькую по стоимости шага клетку
 {
 	float smallestDistance = FLT_MAX;
 	vector <Vector2> ::iterator it = OpenCoordinates.begin();
@@ -242,7 +250,7 @@ void FindSmallestCost(Vector2 &f_Position_Algorithm)//находим самую 
 			smallestIterator = it;
 		}
 	}
-	
+
 	//f_Position_Algorithm.SetDirection(g_CloseCoordinates);//находим направление от новой точки до самой ближайшей нужной
 	OpenCoordinates.erase(smallestIterator);// удаляем чтобы не пробегать по ней снова
 	g_CloseCoordinates.push_back(f_Position_Algorithm);
@@ -267,7 +275,7 @@ void GetField()//считывание поля с файла
 
 	while (getline(g_file_field, LineField))
 	{
-		int Player_Pos_X = 0, Enemy_Pos_X = 0;
+		int Player_Pos_X = 0, Enemy_Pos_X = 0, Win_Pos_X = 0;
 		count_lines++;
 		g_Field.resize(count_lines);
 		g_Enemy_Field.resize(count_lines);
@@ -293,16 +301,46 @@ void GetField()//считывание поля с файла
 				Enemy_Pos_X++;
 			}
 
+			if (cell == 'W')
+			{
+				g_Win_Position.X = Win_Pos_X;
+				g_Win_Position.Y = g_Enemy_Field.size() - 1;
+			}
+			else
+			{
+				Win_Pos_X++;
+			}
 			g_Enemy_Field[g_Enemy_Field.size() - 1].push_back(-1);
 			g_Field[g_Field.size() - 1].push_back(cell);
 		}
 	}
 }
 
-bool MakeTurn(char StepCommand)//человек делает ход
+
+
+void Switch_Player_Position_Check_Enemy(Vector2 f_Next_Position, Game_State& f_state)
+{
+	bool returnValue;
+	if (g_Field[f_Next_Position.Y][f_Next_Position.X] != 'B')
+	{
+
+		swap(g_Field[f_Next_Position.Y][f_Next_Position.X], g_Field[Player_Position.Y][Player_Position.X]);
+		//g_Field[Player_Position.Y][Player_Position.X] = 'O';
+		Player_Position = f_Next_Position;
+
+
+		//g_Field[Player_Position.Y][Player_Position.X] = 'P';
+	}
+	if (f_Next_Position == g_Win_Position)
+		f_state = Win;
+	else
+		f_Next_Position == g_Enemy_Position ? f_state = Game_Over : f_state = Playing;
+}
+
+Game_State MakeTurn(char StepCommand)//человек делает ход
 {
 	Vector2 Next_Position;
-	bool retunValue = false;
+	Game_State return_Game_State = Playing;
 
 	switch (StepCommand)//можно сделать пробежку по массиву, но т.к. команд мало, то switch подойдет
 	{
@@ -310,88 +348,81 @@ bool MakeTurn(char StepCommand)//человек делает ход
 		//cout << "UP" << endl;
 		Next_Position.Y = Player_Position.Y - 1;
 		Next_Position.X = Player_Position.X;
-		if(Next_Position.Y >= 0)
-		if (g_Field[Next_Position.Y][Next_Position.X] != 'B')
+		if (Next_Position.Y >= 0)
 		{
-			retunValue = g_Field[Next_Position.Y][Next_Position.X] == 'W';
-			swap(g_Field[Next_Position.Y][Next_Position.X], g_Field[Player_Position.Y][Player_Position.X]);
-			//g_Field[Player_Position.Y][Player_Position.X] = 'O';
-			Player_Position = Next_Position;
-			//g_Field[Player_Position.Y][Player_Position.X] = 'P';
+			Switch_Player_Position_Check_Enemy(Next_Position, return_Game_State);
+
 		}
 		break;
 	case'R':
 		Next_Position.Y = Player_Position.Y;
 		Next_Position.X = Player_Position.X + 1;
 		if (Next_Position.X < g_Field[Next_Position.Y].size())
-			if (g_Field[Next_Position.Y][Next_Position.X] != 'B')
-			{
-				retunValue = g_Field[Next_Position.Y][Next_Position.X] == 'W';
-				swap(g_Field[Next_Position.Y][Next_Position.X], g_Field[Player_Position.Y][Player_Position.X]);
-				//g_Field[Player_Position.Y][Player_Position.X] = 'O';
-				Player_Position = Next_Position;
-				//g_Field[Player_Position.Y][Player_Position.X] = 'P';
-			}
+		{
+			Switch_Player_Position_Check_Enemy(Next_Position, return_Game_State);
+		}
 		break;
 	case'L':
 		Next_Position.Y = Player_Position.Y;
 		Next_Position.X = Player_Position.X - 1;
 		if (Next_Position.X >= 0)
-			if (g_Field[Next_Position.Y][Next_Position.X] != 'B')
-			{
-				retunValue = g_Field[Next_Position.Y][Next_Position.X] == 'W';
-				swap(g_Field[Next_Position.Y][Next_Position.X], g_Field[Player_Position.Y][Player_Position.X]);
-				Player_Position = Next_Position;
-			}
+		{
+			Switch_Player_Position_Check_Enemy(Next_Position, return_Game_State);
+		}
 		break;
 	case'D':
 		Next_Position.Y = Player_Position.Y + 1;
 		Next_Position.X = Player_Position.X;
 		if (Next_Position.Y < g_Field.size())
-			if (g_Field[Next_Position.Y][Next_Position.X] != 'B')
-			{
-				retunValue = g_Field[Next_Position.Y][Next_Position.X] == 'W';
-				swap(g_Field[Next_Position.Y][Next_Position.X], g_Field[Player_Position.Y][Player_Position.X]);
-				Player_Position = Next_Position;
-			}
+		{
+			Switch_Player_Position_Check_Enemy(Next_Position, return_Game_State);
+		}
 		break;
 	default:
 		//printf("I don't know this command");
 		break;
 	}
 
-	 
+
 	UpdateField();
 
-	return retunValue;
-	
-	
+	return return_Game_State;
+
+
 }
 
-void MakeEnemyStep()//Враг ходит до игрока сразу
-{
 
-		swap(g_Field[g_Enemy_Position.Y][g_Enemy_Position.X], g_Field[PathToPlayer.back().Y][PathToPlayer.back().X]);
-		g_Enemy_Position = PathToPlayer.back();
+void MakeEnemyStep(Game_State& f_game_state)//Враг ходит до игрока сразу
+{
+	if (PathToPlayer.back() != Player_Position)
+	{
+		if (!PathToPlayer.empty())
+		{
+			swap(g_Field[g_Enemy_Position.Y][g_Enemy_Position.X], g_Field[PathToPlayer.back().Y][PathToPlayer.back().X]);
+			g_Enemy_Position = PathToPlayer.back();
+		}
 		UpdateField();
-	
+	}
+	else
+	{
+		f_game_state = Game_Over;
+	}
 }
 
-void EnemyTurn()//очередь врага ходить
+void EnemyTurn(Game_State& f_game_state)//очередь вражины ходить
 {
-	float minimalDistance = 1000000000.f;
+	float minimalDistance = FLT_MAX;
 	FindPathToPlayer(g_Enemy_Position);
 
-	MakeEnemyStep();
+	MakeEnemyStep(f_game_state);
 	UpdateEnemyField();
 }
 
 
-
-int main(int argc, char** argv)
+void main()
 {
-	
-	if(g_file_field.is_open())
+	Game_State current_game_state;
+	if (g_file_field.is_open())
 	{
 		GetField();
 	}
@@ -399,27 +430,25 @@ int main(int argc, char** argv)
 	{
 		printf("No such file in directory. I don't know why but you must write path by yourself");
 		system("pause");
-		return 0;
 	}
 	UpdateField();
 	while (true)
 	{
-		
+
 		char Player_turn;
 		cin >> Player_turn;
-		if (MakeTurn(Player_turn))
+		current_game_state = MakeTurn(Player_turn);
+		if (current_game_state != Playing)
 		{
 			break;
 		}
 		else
 		{
-			EnemyTurn();
+			EnemyTurn(current_game_state);
 		}
 	}
-	printf("GG");
+	current_game_state == Win ?
+		printf("GG") : printf("LOOOOOOOOSER");
 
 	system("pause");
-	return 0;
 }
-
-
