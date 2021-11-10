@@ -217,6 +217,7 @@ void FindPathToPlayer(Vector2 EnemyPosition)//ищем путь к игроку
 void FindSmallestCost(Vector2& f_Position_Algorithm)//находим самую маленькую по стоимости шага клетку
 {
 	float smallestDistance = FLT_MAX;
+	bool flag = false;
 	vector <Vector2> ::iterator it = OpenCoordinates.begin();
 	vector <Vector2> ::iterator smallestIterator;
 	Vector2 old_Enemy_Pos;
@@ -246,12 +247,14 @@ void FindSmallestCost(Vector2& f_Position_Algorithm)//находим самую 
 				cout << smallestDistance << endl;
 				//cout << g_Enemy_Field[NextPosition.Y][NextPosition.X] << " " << sqrt((float)abs(TurnXArray[i] + TurnYArray[i])) << endl;
 			}
+			flag = true;
 			f_Position_Algorithm = *it;
 			smallestIterator = it;
 		}
 	}
 
 	//f_Position_Algorithm.SetDirection(g_CloseCoordinates);//находим направление от новой точки до самой ближайшей нужной
+	if(flag)
 	OpenCoordinates.erase(smallestIterator);// удаляем чтобы не пробегать по ней снова
 	g_CloseCoordinates.push_back(f_Position_Algorithm);
 }
