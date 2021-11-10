@@ -6,6 +6,7 @@
 #include <queue>
 #include <vector>
 #include <string>
+#include <conio.h>
 
 
 using namespace std;
@@ -347,7 +348,7 @@ Game_State MakeTurn(char StepCommand)//человек делает ход
 
 	switch (StepCommand)//можно сделать пробежку по массиву, но т.к. команд мало, то switch подойдет
 	{
-	case 'U':
+	case 'w':
 		//cout << "UP" << endl;
 		Next_Position.Y = Player_Position.Y - 1;
 		Next_Position.X = Player_Position.X;
@@ -357,7 +358,7 @@ Game_State MakeTurn(char StepCommand)//человек делает ход
 
 		}
 		break;
-	case'R':
+	case'd':
 		Next_Position.Y = Player_Position.Y;
 		Next_Position.X = Player_Position.X + 1;
 		if (Next_Position.X < g_Field[Next_Position.Y].size())
@@ -365,7 +366,7 @@ Game_State MakeTurn(char StepCommand)//человек делает ход
 			Switch_Player_Position_Check_Enemy(Next_Position, return_Game_State);
 		}
 		break;
-	case'L':
+	case'a':
 		Next_Position.Y = Player_Position.Y;
 		Next_Position.X = Player_Position.X - 1;
 		if (Next_Position.X >= 0)
@@ -373,7 +374,7 @@ Game_State MakeTurn(char StepCommand)//человек делает ход
 			Switch_Player_Position_Check_Enemy(Next_Position, return_Game_State);
 		}
 		break;
-	case'D':
+	case's':
 		Next_Position.Y = Player_Position.Y + 1;
 		Next_Position.X = Player_Position.X;
 		if (Next_Position.Y < g_Field.size())
@@ -439,7 +440,7 @@ void main()
 	{
 
 		char Player_turn;
-		cin >> Player_turn;
+		Player_turn = _getch();
 		current_game_state = MakeTurn(Player_turn);
 		if (current_game_state != Playing)
 		{
