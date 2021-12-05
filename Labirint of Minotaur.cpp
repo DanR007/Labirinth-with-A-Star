@@ -33,7 +33,7 @@ vector <vector <char>> g_Field;//само игровое поле
 struct Vector2 //структура которая позволяет получать координаты
 {
 	int X, Y;
-	//float StepCost;
+
 	Direction Local_Direction;
 	Vector2()
 	{
@@ -52,12 +52,11 @@ struct Vector2 //структура которая позволяет получ
 
 	void SetDirection(vector <Vector2> closeCoordinates)
 	{
-		//float min = FLT_MAX;
+
 		for (int i = 0; i < CountStep; i++)
 		{
 			for (int j = 0; j < closeCoordinates.size(); j++)
 			{
-				//if (X + TurnXArray[i] == parent.X && Y + TurnYArray[i] == parent.Y)
 				if (X + TurnXArray[i] == closeCoordinates[j].X && Y + TurnYArray[i] == closeCoordinates[j].Y)
 				{
 					Local_Direction = Step_Direction[i];
@@ -89,7 +88,7 @@ vector <vector <float>> g_Enemy_Field;//поле значений у врага
 vector <Vector2> g_CloseCoordinates;//посещенные клетки
 vector <Vector2> OpenCoordinates;//могут быть посещены
 vector <Vector2> PathToPlayer;//путь до игрока
-//string path = std::boost::filesystem::current_path().string();
+
 
 //путь до файла в котором описано поле
 ifstream g_file_field(current_path().string() + "/Field Example.txt");
@@ -143,7 +142,7 @@ void MakePathToPlayer(Vector2 f_Position_Algorithm)//собираем в отд�
 			{
 				next_Position_From_Player.X = f_Position_Algorithm.X - TurnXArray[i];
 				next_Position_From_Player.Y = f_Position_Algorithm.Y - TurnYArray[i];
-				//if()
+				
 				for (vector <Vector2>::iterator it = g_CloseCoordinates.begin(); it != g_CloseCoordinates.end(); it++)
 				{
 					if (next_Position_From_Player == g_Enemy_Position)
@@ -174,7 +173,7 @@ void FindPathToPlayer(Vector2 EnemyPosition)//ищем путь к игроку
 {
 
 	Vector2 NextPosition, Position;//следующая позиция и позиция от которой берется новая
-	//EnemyPosition.StepCost = 0;
+	
 	g_CloseCoordinates.push_back(EnemyPosition);
 
 	g_Enemy_Field[EnemyPosition.Y][EnemyPosition.X] = 0;
@@ -189,9 +188,9 @@ void FindPathToPlayer(Vector2 EnemyPosition)//ищем путь к игроку
 			if (NextPosition.X > -1 && NextPosition.Y > -1 && NextPosition.Y < g_Field.size() && NextPosition.X < g_Field[NextPosition.Y].size())
 			{
 				if (g_Field[NextPosition.Y][NextPosition.X] != 'B' &&
-					Not_In(NextPosition, g_CloseCoordinates)/* && Not_In(NextPosition, OpenCoordinates)*/)//условие чтобы не добавлять в открытую очередь вершины которые там уже имеются
+					Not_In(NextPosition, g_CloseCoordinates))//условие чтобы не добавлять в открытую очередь вершины которые там уже имеются
 				{
-					//if(g_Enemy_Field[NextPosition.Y][NextPosition.X] > g_Enemy_Field[Position.Y][Position.X])
+
 					if (g_Enemy_Field[NextPosition.Y][NextPosition.X] > g_Enemy_Field[Position.Y][Position.X]
 						+ sqrt((float)abs(TurnXArray[i] + TurnYArray[i]))
 						|| g_Enemy_Field[NextPosition.Y][NextPosition.X] == -1)//проверяем можем ли мы добраться в уже существующую точку быстрее если да, то меняем значение
@@ -240,13 +239,11 @@ void FindSmallestCost(Vector2& f_Position_Algorithm)//находим самую 
 			if (it->X == 11 && it->Y == 6)
 			{
 				cout << smallestDistance << endl;
-				//cout << g_Enemy_Field[NextPosition.Y][NextPosition.X] << " " << sqrt((float)abs(TurnXArray[i] + TurnYArray[i])) << endl;
 			}
 			smallestDistance = g_Enemy_Field[it->Y][it->X] + (float)it->GetDistanceTo(Player_Position);
 			if (it->X == 11 && it->Y == 6)
 			{
 				cout << smallestDistance << endl;
-				//cout << g_Enemy_Field[NextPosition.Y][NextPosition.X] << " " << sqrt((float)abs(TurnXArray[i] + TurnYArray[i])) << endl;
 			}
 			flag = true;
 			f_Position_Algorithm = *it;
@@ -327,13 +324,8 @@ void Switch_Player_Position_Check_Enemy(Vector2 f_Next_Position, Game_State& f_s
 	bool returnValue;
 	if (g_Field[f_Next_Position.Y][f_Next_Position.X] != 'B')
 	{
-
 		swap(g_Field[f_Next_Position.Y][f_Next_Position.X], g_Field[Player_Position.Y][Player_Position.X]);
-		//g_Field[Player_Position.Y][Player_Position.X] = 'O';
 		Player_Position = f_Next_Position;
-
-
-		//g_Field[Player_Position.Y][Player_Position.X] = 'P';
 	}
 	if (f_Next_Position == g_Win_Position)
 		f_state = Win;
@@ -413,7 +405,7 @@ void MakeEnemyStep(Game_State& f_game_state)//Враг ходит до игро�
 	}
 }
 
-void EnemyTurn(Game_State& f_game_state)//очередь вражины ходить
+void EnemyTurn(Game_State& f_game_state)//очередь врага ходить
 {
 	float minimalDistance = FLT_MAX;
 	FindPathToPlayer(g_Enemy_Position);
@@ -436,7 +428,7 @@ void main()
 		system("pause");
 	}
 	UpdateField();
-	while (true)
+	while (current_game_state == Playing)
 	{
 
 		char Player_turn;
@@ -452,7 +444,7 @@ void main()
 		}
 	}
 	current_game_state == Win ?
-		printf("GG") : printf("LOOOOOOOOSER");
+		printf("GG") : printf("LOSE");
 
 	system("pause");
 }
